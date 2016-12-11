@@ -6,9 +6,9 @@ what is does
 
 - the client spawns 500 threads and does http requests (connect timeout=1s / read timeouts=8s)
 - the server offers two endpoints
--- /dataSync which processes the http requests synchronously
--- /dataAsync which processes the http requests asynchronously
-- both endpoints assume that every 5th call is very and takes ~5 seconds, while all the other calls return immediately
+  - /dataSync which processes the http requests synchronously
+  - /dataAsync which processes the http requests asynchronously
+- both endpoints assume that every 5th call is very slow and thus takes ~5 seconds, while all the other calls return immediately
 
 
 how to run
