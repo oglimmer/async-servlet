@@ -75,7 +75,7 @@ public enum DataQueue {
 		}
 
 		void processRequestChunk(Set<RequestInformation> done) {
-			if (id % 5 == 0 && System.currentTimeMillis() - lastUpdate < 1000) {
+			if (System.currentTimeMillis() - lastUpdate < 1000) {
 				return;
 			}
 			sendData();

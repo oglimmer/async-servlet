@@ -31,9 +31,7 @@ public class SyncResponse extends HttpServlet {
 
 	private void simulateFrquentlySlowBackend(long id) {
 		try {
-			if (id % 5 == 0) {
-				TimeUnit.MILLISECONDS.sleep(1000);
-			}
+			TimeUnit.MILLISECONDS.sleep(1000);
 		} catch (InterruptedException e) {
 		}
 	}

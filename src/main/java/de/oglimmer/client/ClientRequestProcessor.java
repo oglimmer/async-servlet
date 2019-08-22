@@ -10,7 +10,6 @@ public class ClientRequestProcessor implements Runnable {
 
 	@Override
 	public void run() {
-
 		long start = System.currentTimeMillis();
 		try {
 			URL obj = new URL(Client.url);
@@ -19,16 +18,16 @@ public class ClientRequestProcessor implements Runnable {
 			con.setReadTimeout(8000);
 			String response = readResponse(con);
 			if (!".....".equals(response)) {
-				Client.totalFailedRequests++;
+				Client.totalFailedRequests.incrementAndGet();
 			}
 		} catch (IOException e) {
-			Client.totalFailedRequests++;
+			Client.totalFailedRequests.incrementAndGet();
 		}
-		Client.totalTimeSpent += (System.currentTimeMillis() - start);
-
-		Client.runningThreadCounter--;
-		synchronized (ClientRequestProcessor.class) {
-			ClientRequestProcessor.class.notifyAll();
+		Client.totalTimeSpent.addAndGet(System.currentTimeMillis() - start);
+		Client.finishedCalls.incrementAndGet();
+		if (Client.finishedCalls.get() == Client.totalRequestsToDo) {
+			Client.exec.shutdown();
+			Client.statsThread.interrupt();
 		}
 	}
 
