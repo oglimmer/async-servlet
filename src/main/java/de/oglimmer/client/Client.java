@@ -1,14 +1,17 @@
 package de.oglimmer.client;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Client {
 
 	private static final int MAX_NUMBER_THREADS = 500;
-	static final ExecutorService exec = Executors.newFixedThreadPool(MAX_NUMBER_THREADS);
+	static final ExecutorService exec = new ThreadPoolExecutor(MAX_NUMBER_THREADS, MAX_NUMBER_THREADS, 0L,
+			TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 
 	static long totalRequestsToDo = 50000000;
 	static String url;
@@ -27,22 +30,43 @@ public class Client {
 	}
 
 	private static void buildUrl(String[] args) {
-		if (args.length < 1 || !("dataSync".equals(args[0]) || "dataAsync".equals(args[0]))) {
-			System.out.println("Start with parameter dataSync or dataAsync");
+		if (args.length < 1 || !("sync".equals(args[0]) || "async".equals(args[0]))) {
+			System.out.println("Start with parameter sync or async");
 			System.exit(1);
 		}
 		if (args.length == 2) {
 			totalRequestsToDo = Long.parseLong(args[1]);
 		}
 		url = "http://localhost:8080/" + args[0];
-		System.out.println("Using " + url + " with " + MAX_NUMBER_THREADS + " thread, calling it " + totalRequestsToDo);
+		System.out.println("Using " + url + " with " + MAX_NUMBER_THREADS + " thread, calling it " + totalRequestsToDo
+				+ " times.");
 	}
 
 	private static void mainLoop() throws InterruptedException {
-		int totalThreadsCreatedCounter = 0;
-		while (totalThreadsCreatedCounter++ < totalRequestsToDo) {
+		int requestsDone = 0;
+		AtomicLong done = new AtomicLong();
+		while (requestsDone++ < totalRequestsToDo) {
+			final int id = requestsDone;
 			exec.execute(() -> {
-				new ClientRequestProcessor().run();
+				ClientRequestProcessor crp = new ClientRequestProcessor();
+				try {
+					// SLOW RAMP-UP
+					if (done.get() < MAX_NUMBER_THREADS) {
+						try {
+							Thread.sleep(id * 2);
+						} catch (InterruptedException e) {
+							Thread.currentThread().interrupt();
+						}
+					}
+					// ramp-up end
+					crp.connect();
+					done.incrementAndGet();
+					crp.run();
+				} catch (IOException e) {
+					//e.printStackTrace();
+				} finally {
+					crp.close();
+				}
 			});
 		}
 		exec.awaitTermination(1, TimeUnit.DAYS);

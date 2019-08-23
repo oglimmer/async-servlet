@@ -6,23 +6,38 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class ClientRequestProcessor implements Runnable {
+public class ClientRequestProcessor {
 
-	@Override
-	public void run() {
-		long start = System.currentTimeMillis();
+	long start;
+	HttpURLConnection con;
+
+	public void connect() throws IOException {
+		start = System.currentTimeMillis();
 		try {
 			URL obj = new URL(Client.url);
-			HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-			con.setConnectTimeout(1000);
+			con = (HttpURLConnection) obj.openConnection();
+			con.setConnectTimeout(5000);
 			con.setReadTimeout(8000);
+		} catch (IOException e) {
+			Client.totalFailedRequests.incrementAndGet();
+			throw new IOException(e);
+		}
+	}
+
+	public void run() throws IOException {
+		try {
 			String response = readResponse(con);
 			if (!".....".equals(response)) {
 				Client.totalFailedRequests.incrementAndGet();
 			}
 		} catch (IOException e) {
 			Client.totalFailedRequests.incrementAndGet();
+			throw new IOException(e);
 		}
+	}
+
+	public void close() {
+		con.disconnect();
 		Client.totalTimeSpent.addAndGet(System.currentTimeMillis() - start);
 		Client.finishedCalls.incrementAndGet();
 		if (Client.finishedCalls.get() == Client.totalRequestsToDo) {

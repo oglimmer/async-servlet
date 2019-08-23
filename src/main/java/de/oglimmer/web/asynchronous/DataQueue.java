@@ -16,14 +16,11 @@ public enum DataQueue {
 
 	private Executor exec = Executors.newSingleThreadExecutor();
 
-	private long totalContextsAdded;
-
 	private DataQueue() {
 		exec.execute(new Loader());
 	}
 
 	public void addContext(AsyncContext ac) {
-		totalContextsAdded++;
 		synchronized (requestQueue) {
 			requestQueue.add(new RequestInformation(ac));
 		}
@@ -36,7 +33,7 @@ public enum DataQueue {
 			while (true) {
 				try {
 					sendDataToAllRequests();
-					TimeUnit.MILLISECONDS.sleep(100);
+					TimeUnit.MILLISECONDS.sleep(10);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -63,14 +60,13 @@ public enum DataQueue {
 
 	class RequestInformation {
 
-		long id;
-		long lastUpdate;
-		int chunksSent;
-		AsyncContext ac;
+		private long start = System.currentTimeMillis();
+		private long lastUpdate;
+		private int chunksSent;
+		private AsyncContext ac;
 
 		RequestInformation(AsyncContext ac) {
 			this.ac = ac;
-			this.id = totalContextsAdded;
 			this.lastUpdate = System.currentTimeMillis();
 		}
 
@@ -79,20 +75,21 @@ public enum DataQueue {
 				return;
 			}
 			sendData();
-			chunksSent++;
 			handleCompletion(done);
 		}
 
 		void handleCompletion(Set<RequestInformation> done) {
 			if (chunksSent >= 5) {
-				done.add(this);
 				ac.complete();
+				done.add(this);
+				TimeStats.INSTANCE.onComplete(System.currentTimeMillis() - start);
 			}
 		}
 
 		void sendData() {
 			try {
 				ac.getResponse().getWriter().print(".");
+				chunksSent++;
 				lastUpdate = System.currentTimeMillis();
 			} catch (IOException e) {
 				e.printStackTrace();
