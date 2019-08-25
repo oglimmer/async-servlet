@@ -2,16 +2,14 @@ package de.oglimmer.client;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Client {
 
 	private static final int MAX_NUMBER_THREADS = 500;
-	static final ExecutorService exec = new ThreadPoolExecutor(MAX_NUMBER_THREADS, MAX_NUMBER_THREADS, 0L,
-			TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+	static final ExecutorService exec = Executors.newFixedThreadPool(MAX_NUMBER_THREADS);
 
 	static long totalRequestsToDo = 50000000;
 	static String url;
@@ -63,7 +61,7 @@ public class Client {
 					done.incrementAndGet();
 					crp.run();
 				} catch (IOException e) {
-					//e.printStackTrace();
+					// e.printStackTrace();
 				} finally {
 					crp.close();
 				}

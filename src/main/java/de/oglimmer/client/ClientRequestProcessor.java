@@ -8,6 +8,9 @@ import java.net.URL;
 
 public class ClientRequestProcessor {
 
+	private static final int READ_TIMEOUT = 60000;
+	private static final int CONNECTION_TIMEOUT = 5000;
+	
 	long start;
 	HttpURLConnection con;
 
@@ -16,8 +19,8 @@ public class ClientRequestProcessor {
 		try {
 			URL obj = new URL(Client.url);
 			con = (HttpURLConnection) obj.openConnection();
-			con.setConnectTimeout(5000);
-			con.setReadTimeout(8000);
+			con.setConnectTimeout(CONNECTION_TIMEOUT);
+			con.setReadTimeout(READ_TIMEOUT);
 		} catch (IOException e) {
 			Client.totalFailedRequests.incrementAndGet();
 			throw new IOException(e);
@@ -27,7 +30,7 @@ public class ClientRequestProcessor {
 	public void run() throws IOException {
 		try {
 			String response = readResponse(con);
-			if (!".....".equals(response)) {
+			if (!"<backend-data>".equals(response)) {
 				Client.totalFailedRequests.incrementAndGet();
 			}
 		} catch (IOException e) {
