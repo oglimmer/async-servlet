@@ -9,26 +9,33 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Client {
 
 	private static final int MAX_NUMBER_THREADS = 500;
-	static final ExecutorService exec = Executors.newFixedThreadPool(MAX_NUMBER_THREADS);
+	private final ExecutorService exec = Executors.newFixedThreadPool(MAX_NUMBER_THREADS);
 
-	static long totalRequestsToDo = 50000000;
-	static String url;
+	private long totalRequestsToDo = 500;
+	private String url;
+	private Statistics statistics;
 
-	static AtomicLong finishedCalls = new AtomicLong();
-	static AtomicLong totalTimeSpent = new AtomicLong();
-	static AtomicLong maxTimeSpent = new AtomicLong();
-	static AtomicLong totalFailedRequests = new AtomicLong();
-	static Thread statsThread;
-
-	public static void main(String[] args) throws InterruptedException {
-		buildUrl(args);
-		statsThread();
-		mainLoop();
-		System.out.println("Processing took " + (totalTimeSpent.get() / (double) finishedCalls.get())
-				+ " msec in average and it failed for " + totalFailedRequests.get());
+	public static void main(String[] args) {
+		new Client(args);
 	}
 
-	private static void buildUrl(String[] args) {
+	private Client(String[] args) {
+		buildUrl(args);
+		statistics = new Statistics(this);
+		statistics.start();
+		mainLoop();
+		statistics.print();
+	}
+
+	public Statistics getStatistics() {
+		return statistics;
+	}
+
+	public ExecutorService getExecutorService() {
+		return exec;
+	}
+
+	private void buildUrl(String[] args) {
 		if (args.length < 1 || !("sync".equals(args[0]) || "async".equals(args[0]))) {
 			System.out.println("Start with parameter sync or async");
 			System.exit(1);
@@ -41,13 +48,13 @@ public class Client {
 				+ " times.");
 	}
 
-	private static void mainLoop() throws InterruptedException {
+	private void mainLoop() {
 		int requestsDone = 0;
 		AtomicLong done = new AtomicLong();
 		while (requestsDone++ < totalRequestsToDo) {
 			final int id = requestsDone;
 			exec.execute(() -> {
-				ClientRequestProcessor crp = new ClientRequestProcessor();
+				ClientRequestProcessor crp = new ClientRequestProcessor(this);
 				try {
 					// SLOW RAMP-UP
 					if (done.get() < MAX_NUMBER_THREADS) {
@@ -58,7 +65,7 @@ public class Client {
 						}
 					}
 					// ramp-up end
-					crp.connect();
+					crp.connect(url);
 					done.incrementAndGet();
 					crp.run();
 				} catch (IOException e) {
@@ -68,32 +75,15 @@ public class Client {
 				}
 			});
 		}
-		exec.awaitTermination(1, TimeUnit.DAYS);
+		try {
+			exec.awaitTermination(1, TimeUnit.DAYS);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
 	}
 
-	private static void statsThread() {
-		statsThread = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				long startCounter = finishedCalls.get();
-				long startFailed = totalFailedRequests.get();
-				while (finishedCalls.get() < totalRequestsToDo) {
-					try {
-						Thread.sleep(5000);
-						System.out.println("Did " + (finishedCalls.get() - startCounter) + " with "
-								+ (totalFailedRequests.get() - startFailed) + " failing.");
-						startCounter = finishedCalls.get();
-						startFailed = totalFailedRequests.get();
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-					}
-				}
-				System.out.println("Did " + (finishedCalls.get() - startCounter) + " with "
-						+ (totalFailedRequests.get() - startFailed) + " failing. Max time: " + maxTimeSpent.get());
-			}
-		});
-		statsThread.start();
+	public long getTotalRequestsToDo() {
+		return totalRequestsToDo;
 	}
 
 }

@@ -11,18 +11,23 @@ public class ClientRequestProcessor {
 	private static final int READ_TIMEOUT = 15000;
 	private static final int CONNECTION_TIMEOUT = 2000;
 
-	long start;
-	HttpURLConnection con;
+	private long start;
+	private HttpURLConnection con;
+	private Client client;
 
-	public void connect() throws IOException {
+	public ClientRequestProcessor(Client client) {
+		this.client = client;
+	}
+
+	public void connect(String url) throws IOException {
 		start = System.currentTimeMillis();
 		try {
-			URL obj = new URL(Client.url);
+			URL obj = new URL(url);
 			con = (HttpURLConnection) obj.openConnection();
 			con.setConnectTimeout(CONNECTION_TIMEOUT);
 			con.setReadTimeout(READ_TIMEOUT);
 		} catch (IOException e) {
-			Client.totalFailedRequests.incrementAndGet();
+			client.getStatistics().getTotalFailedRequests().incrementAndGet();
 			throw new IOException(e);
 		}
 	}
@@ -31,10 +36,10 @@ public class ClientRequestProcessor {
 		try {
 			String response = readResponse(con);
 			if (!"<backend-data>".equals(response)) {
-				Client.totalFailedRequests.incrementAndGet();
+				client.getStatistics().getTotalFailedRequests().incrementAndGet();
 			}
 		} catch (IOException e) {
-			Client.totalFailedRequests.incrementAndGet();
+			client.getStatistics().getTotalFailedRequests().incrementAndGet();
 			throw new IOException(e);
 		}
 	}
@@ -42,14 +47,15 @@ public class ClientRequestProcessor {
 	public void close() {
 		con.disconnect();
 		long totalTime = System.currentTimeMillis() - start;
-		Client.totalTimeSpent.addAndGet(totalTime);
-		if (Client.maxTimeSpent.get() < totalTime) {
-			Client.maxTimeSpent.set(totalTime);
+		Statistics statistics = client.getStatistics();
+		statistics.getTotalTimeSpent().addAndGet(totalTime);
+		if (statistics.getMaxTimeSpent().get() < totalTime) {
+			statistics.getMaxTimeSpent().set(totalTime);
 		}
-		Client.finishedCalls.incrementAndGet();
-		if (Client.finishedCalls.get() == Client.totalRequestsToDo) {
-			Client.exec.shutdown();
-			Client.statsThread.interrupt();
+		statistics.getFinishedCalls().incrementAndGet();
+		if (statistics.getFinishedCalls().get() == client.getTotalRequestsToDo()) {
+			client.getExecutorService().shutdown();
+			statistics.interrupt();
 		}
 	}
 
