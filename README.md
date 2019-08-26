@@ -14,22 +14,28 @@ what is does
 how to run
 ----------
 
-0.) start the slow backend server
+1.) start the slow backend server
 
 $ cd fake-backend; ./gradlew bootRun
 
-1.) start the webserver
+2.) start the webserver
 
-$ mvn jetty:run
+$ cd api; ./gradlew bootRun
 
-2.) wait a couple of seconds and then start the client using the asynchronous processing
+3.) wait a couple of seconds and then start the client using the asynchronous processing
 
-$ ./run.sh async 2000
+$ cd client; ./run.sh async 2000
 
-3.) as you see all requests return successfully 
+4.) as you see all requests return successfully 
 
-4.) stop the client (ctrl-c) and start the client again, now using the synchronous processing
+5.) Now using the synchronous processing
 
-$ ./run.sh sync 2000
+$ cd client; ./run.sh sync 2000
 
-5.) watch the world burn
+.... watch the world burn
+
+p.s. in all fairness it really depends on the some parameters:
+
+* number of concurrent client connections (here 500)
+* read timeout of the client (here 15 seconds)
+* number of worker threads in the servlet container (here 50)
