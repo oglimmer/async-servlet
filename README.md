@@ -4,7 +4,7 @@ This simulates a slow backend and how an asynchronous servlet processing make th
 what is does
 ------------
 
-- the client spawns 500 threads and does http requests (connect timeout=5s / read timeouts=60s)
+- the client spawns 500 threads and does http requests (connect timeout=2s / read timeouts=15s)
 - the server offers two endpoints
   - /sync which processes the http requests synchronously
   - /async which processes the http requests asynchronously
