@@ -8,8 +8,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Client {
 
-	private static final int MAX_NUMBER_THREADS = 500;
-	private final ExecutorService exec = Executors.newFixedThreadPool(MAX_NUMBER_THREADS);
+	private static int MAX_NUMBER_THREADS = 500;
+	private ExecutorService exec;
 
 	private long totalRequestsToDo = 500;
 	private String url;
@@ -40,9 +40,13 @@ public class Client {
 			System.out.println("Start with parameter sync or async");
 			System.exit(1);
 		}
-		if (args.length == 2) {
+		if (args.length >= 2) {
 			totalRequestsToDo = Long.parseLong(args[1]);
 		}
+		if (args.length >= 3) {
+			MAX_NUMBER_THREADS = Integer.parseInt(args[2]);
+		}
+		exec = Executors.newFixedThreadPool(MAX_NUMBER_THREADS);
 		url = "http://localhost:8080/" + args[0];
 		System.out.println("Using " + url + " with " + MAX_NUMBER_THREADS + " thread, calling it " + totalRequestsToDo
 				+ " times.");

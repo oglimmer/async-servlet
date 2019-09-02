@@ -7,6 +7,8 @@ import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import de.oglimmer.async.api.component.TimeStats;
+
 @SpringBootApplication
 @Configuration
 public class ApiApplication {
@@ -22,5 +24,15 @@ public class ApiApplication {
 		jettyContainer.setPort(8080);
 		jettyContainer.setThreadPool(new QueuedThreadPool(50, 50));
 		return jettyContainer;
+	}
+
+	@Bean("sync")
+	public TimeStats getTimeStatsSync() {
+		return new TimeStats("Sync");
+	}
+
+	@Bean("async")
+	public TimeStats getTimeStatsAsync() {
+		return new TimeStats("Async");
 	}
 }
