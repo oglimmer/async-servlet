@@ -1,20 +1,15 @@
 package de.oglimmer.async.api.service;
 
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.async.DeferredResult;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import de.oglimmer.async.api.component.FakeBackendUri;
 import de.oglimmer.async.api.component.TimeStats;
+import reactor.core.publisher.Mono;
 
 @RestController
 public class AsyncService {
@@ -23,22 +18,15 @@ public class AsyncService {
 	@Qualifier("async")
 	private TimeStats stats;
 
-	@Autowired
-	private FakeBackendUri uri;
-
-	private HttpClient client = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(20)).build();
+	private WebClient client = WebClient.create("http://localhost:9090/queryResource");
 
 	@GetMapping(value = "/async")
-	public DeferredResult<ResponseEntity<String>> get() {
+	public CompletableFuture<String> get() {
 		final long start = System.currentTimeMillis();
-		DeferredResult<ResponseEntity<String>> result = new DeferredResult<>();
-		HttpRequest backendReq = HttpRequest.newBuilder(uri.get()).GET().build();
-		client.sendAsync(backendReq, BodyHandlers.ofString()).thenAccept((HttpResponse<String> response) -> {
-			String data = response.body();
+		Mono<String> mono = client.get().retrieve().bodyToMono(String.class);
+		return mono.toFuture().whenComplete((success, error) -> {
 			stats.onComplete(System.currentTimeMillis() - start);
-			result.setResult(ResponseEntity.ok(data));
 		});
-		return result;
 	}
 
 }

@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 import de.oglimmer.async.api.component.TimeStats;
 
@@ -34,5 +35,10 @@ public class ApiApplication {
 	@Bean("async")
 	public TimeStats getTimeStatsAsync() {
 		return new TimeStats("Async");
+	}
+
+	@Bean
+	public RestTemplate restTemplate() {
+		return new RestTemplate();
 	}
 }
