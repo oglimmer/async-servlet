@@ -19,7 +19,7 @@ public class SlowResourceService {
 		DeferredResult<ResponseEntity<String>> result = new DeferredResult<>();
 		service.schedule(() -> {
 			result.setResult(ResponseEntity.ok("<backend-data>"));
-		}, 5, TimeUnit.SECONDS);
+		}, (int) (Math.random() * 10000), TimeUnit.MILLISECONDS);
 		return result;
 	}
 
