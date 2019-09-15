@@ -1,15 +1,14 @@
 package de.oglimmer.async.api.service;
 
-import java.util.concurrent.CompletableFuture;
-
+import de.oglimmer.async.api.component.TimeStats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
-
-import de.oglimmer.async.api.component.TimeStats;
 import reactor.core.publisher.Mono;
+
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 public class AsyncService {

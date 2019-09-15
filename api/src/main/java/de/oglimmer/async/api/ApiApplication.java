@@ -1,5 +1,6 @@
 package de.oglimmer.async.api;
 
+import de.oglimmer.async.api.component.TimeStats;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -7,8 +8,6 @@ import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
-
-import de.oglimmer.async.api.component.TimeStats;
 
 @SpringBootApplication
 @Configuration
@@ -41,4 +40,5 @@ public class ApiApplication {
 	public RestTemplate restTemplate() {
 		return new RestTemplate();
 	}
+
 }
