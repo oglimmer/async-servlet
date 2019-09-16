@@ -7,8 +7,8 @@ public class ConnectionList {
 
 	private List<HttpRequestProcessor> hrp = new ArrayList<>();
 
-	public void addConnection(int delay) {
-		hrp.add(new HttpRequestProcessor(delay));
+	public void addConnection(Config config, Content content, int delay) {
+		hrp.add(new HttpRequestProcessor(config, content, delay));
 	}
 
 	public List<HttpRequestProcessor> getConnections() {

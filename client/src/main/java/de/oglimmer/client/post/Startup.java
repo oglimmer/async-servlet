@@ -12,22 +12,18 @@ import java.util.concurrent.TimeUnit;
  */
 public class Startup {
 
-	// DEFAULTS
-	private static int delay = 150;
-	private static int numberNormalConnections = 5;
-	private static int numberBadConnections = 5;
-	private static int totalNumberCalls = Integer.MAX_VALUE;
+	private Thread statsThread;
+	private Config config;
 
-	static Thread statsThread;
-	
-	static String host = "localhost";
-	static String port = "8080";
-	static String uri;
-
-	private volatile static ConnectionList ce = new ConnectionList();
+	private volatile ConnectionList ce = new ConnectionList();
 
 	public static void main(String[] args) {
-		buildConfig(args);
+		Config config = Config.buildConfig(args);
+		new Startup(config);
+	}
+
+	public Startup(Config config) {
+		this.config = config;
 		initConnections();
 		createShutdownHook();
 		createStatsThread();
@@ -35,7 +31,7 @@ public class Startup {
 		shutdown();
 	}
 
-	private static void shutdown() {
+	private void shutdown() {
 		for (Iterator<HttpRequestProcessor> it = ce.getConnections().iterator(); it.hasNext();) {
 			HttpRequestProcessor hrp = it.next();
 			hrp.close();
@@ -44,9 +40,9 @@ public class Startup {
 		statsThread.stop();
 	}
 
-	private static void mainLoop() {
+	private void mainLoop() {
 		try {
-			while (Statistics.INSTANCE.totalCount < totalNumberCalls) {
+			while (Statistics.INSTANCE.totalCount < config.getTotalNumberCalls()) {
 				ce.getConnections().forEach(HttpRequestProcessor::process);
 			}
 		} catch (Throwable e) {
@@ -54,72 +50,46 @@ public class Startup {
 		}
 	}
 
-	private static void initConnections() {
-		for (int i = 0; i < numberNormalConnections; i++) {
-			ce.addConnection(0);
+	private void initConnections() {
+		for (int i = 0; i < config.getNumberNormalConnections(); i++) {
+			ce.addConnection(config, new FileContent(),0);
 		}
-		for (int i = 0; i < numberBadConnections; i++) {
-			ce.addConnection(delay);
+		for (int i = 0; i < config.getNumberBadConnections(); i++) {
+			ce.addConnection(config, new FileContent(), config.getDelay());
 		}
 	}
 
-	private static void createStatsThread() {
+	private void createStatsThread() {
 		statsThread = new Thread(new StatisticsThread());
 		statsThread.start();
 	}
 
-	private static void createShutdownHook() {
-		Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownThread()));
+	private void createShutdownHook() {
+		Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownThread(ce)));
 	}
 
-	private static void buildConfig(String[] args) {
-		if (args.length < 1) {
-			System.out.println(
-					"usage: URL [#-normal-connections #-bad-connections [delay for bad connections [number of calls]]]");
-			System.exit(1);
-		}
-		if (args[0].startsWith("http")) {
-			args[0] = args[0].substring(7);// cut http://
-			host = args[0].substring(0, args[0].indexOf(":"));
-			port = args[0].substring(args[0].indexOf(":") + 1, args[0].indexOf("/"));
-			uri = args[0].substring(args[0].indexOf("/"));
-		} else {
-			uri = "/" + args[0];
-		}
+}
 
-		if (args.length > 1) {
-			numberNormalConnections = Integer.parseInt(args[1]);
-		}
-		if (args.length > 2) {
-			numberBadConnections = Integer.parseInt(args[2]);
-		}
-		if (args.length > 3) {
-			delay = Integer.parseInt(args[3]);
-		}
-		if (args.length > 4) {
-			totalNumberCalls = Integer.parseInt(args[4]);
-		}
-		System.out.println("Using http://" + host + ":" + port + uri + " with normal " + numberNormalConnections
-				+ " thread and " + numberBadConnections + " bad thread with delay of " + delay + ".");
+class ShutdownThread implements Runnable {
+
+	private ConnectionList ce;
+
+	public ShutdownThread(ConnectionList ce ) {
+		this.ce = ce;
 	}
 
-	private Startup() {
-	}
+	public void run() {
+		Thread.currentThread().setName("ShutdownHook-Thread");
+		System.out.println("shutting down..");
 
-	static class ShutdownThread implements Runnable {
-		public void run() {
-			Thread.currentThread().setName("ShutdownHook-Thread");
-			System.out.println("shutting down..");
-
-			while (!ce.getConnections().isEmpty()) {
-				try {
-					TimeUnit.MILLISECONDS.sleep(50);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+		while (!ce.getConnections().isEmpty()) {
+			try {
+				TimeUnit.MILLISECONDS.sleep(50);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-
-			System.out.println("shutdown completed.");
 		}
+
+		System.out.println("shutdown completed.");
 	}
 }

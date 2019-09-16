@@ -8,3 +8,6 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 /.gradle/
+client/client.iml
+.DS_Store
+

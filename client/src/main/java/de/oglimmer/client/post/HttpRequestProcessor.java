@@ -10,7 +10,6 @@ import java.net.URL;
 
 public class HttpRequestProcessor {
 
-	private static final String FILE_CONTENT = "123";
 	private static int idCounter;
 
 	private int delay;
@@ -21,13 +20,16 @@ public class HttpRequestProcessor {
 
 	private long lastChunkWrittenAt;
 	private int bytesWritten;
-	private byte[] payload;
-	private String boundry;
 
 	private HttpURLConnection con;
 	private OutputStream os;
 
-	public HttpRequestProcessor(int delay) {
+	private Config config;
+	private Content content;
+
+	public HttpRequestProcessor(Config config, Content content, int delay) {
+		this.config = config;
+		this.content = content;
 		this.delay = delay;
 		this.id = idCounter++;
 	}
@@ -66,28 +68,13 @@ public class HttpRequestProcessor {
 		}
 	}
 
-	private static final String ALPHA_NUMERIC_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-	public static String randomAlphaNumeric(int count) {
-		StringBuilder builder = new StringBuilder();
-		while (count-- != 0) {
-			int character = (int) (Math.random() * ALPHA_NUMERIC_STRING.length());
-			builder.append(ALPHA_NUMERIC_STRING.charAt(character));
-		}
-		return builder.toString();
-	}
-
 	private void init() {
 		start = System.currentTimeMillis();
 		try {
-			boundry = "--------------" + randomAlphaNumeric(20);
-			String tmpbuff1 = "--" + boundry + "\n"
-					+ "Content-Disposition: form-data; name=\"file\"; filename=\"file.txt\"\n"
-					+ "Content-Type: text/plain\n" + "\n" + FILE_CONTENT + ".\n" + "--" + boundry + "--";
-			this.payload = tmpbuff1.getBytes();
-
-			URL url = new URL("http", Startup.host, Integer.parseInt(Startup.port), Startup.uri, null);
+			URL url = new URL("http", config.getHost(), Integer.parseInt(config.getPort()), config.getUri(), null);
 			con = (HttpURLConnection) url.openConnection();
+
+			content.generate();
 
 			con.setDoOutput(true);
 			con.setDoInput(true);
@@ -97,9 +84,9 @@ public class HttpRequestProcessor {
 			con.setDefaultUseCaches(false);
 			con.setInstanceFollowRedirects(false);
 			con.setUseCaches(false);
-			log("length=" + payload.length);
-			con.setFixedLengthStreamingMode(payload.length);
-			con.addRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundry);
+			log("length=" + content.getPayload().length);
+			con.setFixedLengthStreamingMode(content.getPayload().length);
+			con.addRequestProperty("Content-Type", "multipart/form-data; boundary=" + content.getBoundry());
 
 			os = con.getOutputStream();
 			lastChunkWrittenAt = System.currentTimeMillis();
@@ -116,8 +103,8 @@ public class HttpRequestProcessor {
 		}
 
 		try {
-			if (bytesWritten < payload.length) {
-				os.write(payload[bytesWritten]);
+			if (bytesWritten < content.getPayload().length) {
+				os.write(content.getPayload()[bytesWritten]);
 				bytesWritten++;
 				log("process...." + this.id + " / bytesWritten=" + bytesWritten);
 				lastChunkWrittenAt = System.currentTimeMillis();
@@ -164,8 +151,7 @@ public class HttpRequestProcessor {
 		con = null;
 		os = null;
 		bytesWritten = 0;
-		boundry = null;
-		payload = null;
+		content.reset();
 	}
 
 	private String readResponse(InputStream is) throws IOException {
