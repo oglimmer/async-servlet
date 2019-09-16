@@ -1,11 +1,14 @@
-This simulates a slow backend and how an asynchronous servlet processing make things better
-===========================================================================================
+***************
+client/get.sh
+***************
+
+-> This simulates a slow backend and how an asynchronous servlet processing make things better
 
 what is does
 ------------
 
 - the client spawns 500 threads and does http requests (connect timeout=2s / read timeouts=15s)
-- the server offers two endpoints
+- the server offers two GET endpoints
   - /sync which processes the http requests synchronously
   - /async which processes the http requests asynchronously
 - both endpoints calls the "slow backend server at 9090", those calls take ~5 seconds
@@ -24,13 +27,13 @@ $ cd api; ./gradlew bootRun
 
 3.) wait a couple of seconds and then start the client using the asynchronous processing
 
-$ cd client; ./run.sh async 2000
+$ cd client; ./get.sh http://localhost:8080/async 1000 100
 
 4.) as you see all requests return successfully 
 
 5.) Now using the synchronous processing
 
-$ cd client; ./run.sh sync 2000
+$ cd client; ./run.sh http://localhost:8080/sync 1000 100
 
 .... watch the world burn
 

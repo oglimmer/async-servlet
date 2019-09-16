@@ -1,8 +1,10 @@
 package de.oglimmer.async.api.component;
 
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,41 +17,40 @@ public class ThreadStats {
 
 	private volatile AtomicInteger idGenerator = new AtomicInteger();
 
-	private volatile Set<Integer> activeCounter = Collections.synchronizedSet(new HashSet<>());
+	private volatile Map<Integer, Long> activeCounter = Collections.synchronizedMap(new HashMap<>());
 	private volatile long totalDoneCounter;
 	private volatile long deltaDoneCounter;
-	private volatile long byteCounter;
 	private volatile long timeSpent;
-
-	public void incTime(long time) {
-		timeSpent += time;
-	}
 
 	public int incActive() {
 		int id = idGenerator.incrementAndGet();
-		if (activeCounter.contains(id)) {
-			System.out.println("[WARNING] ID " + id + " already active!");
+		if (activeCounter.containsKey(id)) {
+			System.err.println("[WARNING] ID " + id + " already active!");
 		}
-		activeCounter.add(id);
+		activeCounter.put(id, System.currentTimeMillis());
 		return id;
 	}
 
-	public void decActive(int id) {
-		if (!activeCounter.remove(id)) {
-			System.out.println("[WARNING] ID " + id + " was not active!");
+	public void decActive(int id, boolean count) {
+		Long startTime = activeCounter.remove(id);
+		if (startTime == null) {
+			System.err.println("[WARNING] ID " + id + " was not active!");
+		} else {
+			timeSpent += System.currentTimeMillis() - startTime;
 		}
-	}
-
-	public void incAll(long time, long bytes) {
-		totalDoneCounter++;
-		deltaDoneCounter++;
-		byteCounter += bytes;
-		timeSpent += time;
+		if (count) {
+			totalDoneCounter++;
+			deltaDoneCounter++;
+		}
+		if (totalDoneCounter % 500 == 0) {
+			System.out.println("done 500 ...");
+		}
 	}
 
 	@PostConstruct
 	public void init() {
-		new Thread(new Runnable() {
+		Executor exec = Executors.newSingleThreadExecutor();
+		exec.execute(new Runnable() {
 
 			@Override
 			public void run() {
@@ -57,20 +58,19 @@ public class ThreadStats {
 
 					long avgTimeSpent = totalDoneCounter != 0 ? timeSpent / totalDoneCounter : -1;
 
-					System.out.println("Since last row: updates=" + deltaDoneCounter + ", bytes=" + byteCounter
-							+ ", currently active: uploads=" + activeCounter.size() + ", threads="
-							+ Thread.activeCount() + ", total thread time/count: " + timeSpent + "milli / "
-							+ totalDoneCounter + " (" + avgTimeSpent + "milli)");
+					System.out.println("Δ-calls: " + deltaDoneCounter + ", active-threads: " + activeCounter.size()
+							+ ", total-threads: " + Thread.activeCount() + ", total-calls: " + totalDoneCounter
+							+ " (⌀ time spent: " + avgTimeSpent + " millis)");
 					deltaDoneCounter = 0;
-					byteCounter = 0;
 					try {
 						TimeUnit.MILLISECONDS.sleep(10_000);
 					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
 					}
 				}
 			}
 
-		}).start();
+		});
 	}
 
 }

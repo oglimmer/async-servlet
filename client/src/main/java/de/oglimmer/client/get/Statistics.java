@@ -1,4 +1,4 @@
-package de.oglimmer.client;
+package de.oglimmer.client.get;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -24,7 +24,7 @@ public class Statistics implements Runnable {
 	public void run() {
 		long startCounter = finishedCalls.get();
 		long startFailed = totalFailedRequests.get();
-		while (finishedCalls.get() < client.getTotalRequestsToDo()) {
+		while (finishedCalls.get() < client.getConfig().getTotalRequestsToDo()) {
 			try {
 				Thread.sleep(5000);
 				System.out.println("Did " + (finishedCalls.get() - startCounter) + " with "

@@ -1,8 +1,6 @@
 package de.oglimmer.async.api;
 
-import de.oglimmer.async.api.service.AsyncServlet;
 import org.springframework.boot.web.servlet.ServletComponentScan;
-import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
@@ -13,9 +11,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
+import de.oglimmer.async.api.service.AsyncPost;
+
 @EnableWebMvc
 @Configuration
-@ServletComponentScan(basePackageClasses = AsyncServlet.class)
+@ServletComponentScan(basePackageClasses = AsyncPost.class)
 public class WebConfig implements WebMvcConfigurer {
 
 	private int MAX_UPLOAD_SIZE = 5 * 1024 * 1024;

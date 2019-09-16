@@ -1,4 +1,4 @@
-package de.oglimmer.client;
+package de.oglimmer.client.get;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,7 +53,7 @@ public class ClientRequestProcessor {
 			statistics.getMaxTimeSpent().set(totalTime);
 		}
 		statistics.getFinishedCalls().incrementAndGet();
-		if (statistics.getFinishedCalls().get() == client.getTotalRequestsToDo()) {
+		if (statistics.getFinishedCalls().get() == client.getConfig().getTotalRequestsToDo()) {
 			client.getExecutorService().shutdown();
 			statistics.interrupt();
 		}
