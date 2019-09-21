@@ -2,4 +2,4 @@
 
 #mvn compile
 
-java -cp target/classes de.oglimmer.client.post.Startup "$@"
+java -cp target/classes de.oglimmer.client.post.PostClient "Field" "$@"

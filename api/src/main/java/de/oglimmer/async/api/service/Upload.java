@@ -13,14 +13,20 @@ import org.springframework.web.multipart.MultipartFile;
 import de.oglimmer.async.api.form.Login;
 
 @Controller
-public class FileUpload {
+public class Upload {
 
+	/**
+	 * Access via Browser at http://localhost:8080/fileUpload
+	 */
 	@RequestMapping(value = "/fileUpload", method = RequestMethod.GET)
 	public String displayForm(Model model) {
 		model.addAttribute("login", new Login());
 		return "fileUploadForm";
 	}
 
+	/**
+	 * Access via client/upload.sh http://localhost:8080/uploadFile
+	 */
 	@RequestMapping(value = "/uploadFile", method = RequestMethod.POST)
 	public String submit(@RequestParam("file") MultipartFile file, ModelMap modelMap) throws IOException {
 		modelMap.addAttribute("file", file);

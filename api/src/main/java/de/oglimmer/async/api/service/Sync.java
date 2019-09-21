@@ -10,27 +10,26 @@ import org.springframework.web.client.RestTemplate;
 @RestController
 public class Sync {
 
-	@Autowired
-	private RestTemplate restTemplate;
+    @Autowired
+    private RestTemplate restTemplate;
 
-	/**
-	 * Access via client/get.sh http://localhost:8080/sync
-	 */
-	@GetMapping(value = "/sync")
-	public String get() {
-		return restTemplate.getForObject("http://localhost:9090/queryResource", String.class);
-	}
+    /**
+     * Access via client/get.sh http://localhost:8080/sync
+     */
+    @GetMapping(value = "/sync")
+    public String get() {
+        return restTemplate.getForObject("http://localhost:9090/queryResource", String.class);
+    }
 
-	/**
-	 * Access via client/post.sh http://localhost:8080/sync
-	 */
-	@PostMapping(value = "/sync")
-	public String post(@RequestParam("foo") String foo) {
-		if ("bar".equals(foo)) {
-			return "done";
-		}
-		System.out.println(foo);
-		return "error";
-	}
+    /**
+     * Access via client/post.sh http://localhost:8080/sync
+     */
+    @PostMapping(value = "/sync")
+    public String post(@RequestParam("foo") String foo) {
+        if (foo != null && foo.length() == 512) {
+            return "done";
+        }
+        return "error";
+    }
 
 }

@@ -43,7 +43,7 @@ public class ThreadStats {
 			deltaDoneCounter++;
 		}
 		if (totalDoneCounter % 500 == 0) {
-			System.out.println("done 500 ...");
+			// System.out.println("done 500 ...");
 		}
 	}
 
@@ -58,7 +58,7 @@ public class ThreadStats {
 
 					long avgTimeSpent = totalDoneCounter != 0 ? timeSpent / totalDoneCounter : -1;
 
-					System.out.println("Δ-calls: " + deltaDoneCounter + ", active-threads: " + activeCounter.size()
+					System.out.println("Δ-calls: " + deltaDoneCounter + ", active-connections: " + activeCounter.size()
 							+ ", total-threads: " + Thread.activeCount() + ", total-calls: " + totalDoneCounter
 							+ " (⌀ time spent: " + avgTimeSpent + " millis)");
 					deltaDoneCounter = 0;

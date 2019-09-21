@@ -15,19 +15,23 @@ import org.springframework.stereotype.Component;
 @Component
 public class StatsFilter implements Filter {
 
-	@Autowired
-	private ThreadStats threadStats;
+    @Autowired
+    private ThreadStats threadStats;
 
-	@Override
-	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-			throws IOException, ServletException {
-		int id = threadStats.incActive();
-		chain.doFilter(request, response);
-		boolean count = false;
-		if (request instanceof HttpServletRequest) {
-			count = !((HttpServletRequest) request).getRequestURI().contains("async");
-		}
-		threadStats.decActive(id, count);
-	}
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+        int id = threadStats.incActive();
+        chain.doFilter(request, response);
+        boolean count = false;
+        if (request instanceof HttpServletRequest) {
+            count = !containsIgnoreCase(((HttpServletRequest) request).getRequestURI(), "async");
+        }
+        threadStats.decActive(id, count);
+    }
 
+
+    public boolean containsIgnoreCase(String str, String subString) {
+        return str.toLowerCase().contains(subString.toLowerCase());
+    }
 }

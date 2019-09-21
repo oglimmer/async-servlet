@@ -11,11 +11,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
-import de.oglimmer.async.api.service.AsyncPost;
+import de.oglimmer.async.api.service.AsyncServlet;
 
 @EnableWebMvc
 @Configuration
-@ServletComponentScan(basePackageClasses = AsyncPost.class)
+@ServletComponentScan(basePackageClasses = AsyncServlet.class)
 public class WebConfig implements WebMvcConfigurer {
 
 	private int MAX_UPLOAD_SIZE = 5 * 1024 * 1024;
