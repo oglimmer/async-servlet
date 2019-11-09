@@ -1,11 +1,7 @@
 package de.oglimmer.async.api.service;
 
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
+import de.oglimmer.async.api.component.ThreadStats;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.ReadListener;
@@ -15,19 +11,21 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.reactive.function.client.WebClient;
-
-import de.oglimmer.async.api.component.ThreadStats;
-import reactor.core.publisher.Mono;
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 
 @WebServlet(urlPatterns = {"/asyncServlet"}, asyncSupported = true)
 public class AsyncServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
-
-    private WebClient client = WebClient.create("http://localhost:9090/queryResource");
 
     @Autowired
     private ThreadStats threadStats;
@@ -36,15 +34,19 @@ public class AsyncServlet extends HttpServlet {
      * Access via client/get.sh http://localhost:8080/asyncServlet
      */
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         int id = threadStats.incActive();
         AsyncContext context = request.startAsync();
-        Mono<String> mono = client.get().retrieve().bodyToMono(String.class);
-        mono.subscribe(success -> {
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest backendRequest = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:9090/queryResource"))
+                .build();
+
+        client.sendAsync(backendRequest, HttpResponse.BodyHandlers.ofString()).thenAccept(backendResponse -> {
             threadStats.decActive(id, true);
             try {
-                context.getResponse().getWriter().println(success);
+                context.getResponse().getWriter().println(backendResponse.body());
             } catch (IOException e) {
                 e.printStackTrace();
             }
