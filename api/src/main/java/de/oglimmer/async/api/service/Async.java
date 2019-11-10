@@ -40,7 +40,7 @@ public class Async {
 	 */
 	@PostMapping(value = "/async")
 	public void post(HttpServletRequest request) {
-		if (request.isAsyncSupported()) {
+		if (!request.isAsyncSupported()) {
 			throw new RuntimeException("async not supported");
 		}
 	}
